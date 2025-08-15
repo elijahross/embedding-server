@@ -10,13 +10,24 @@ pub fn auth_config() -> &'static AuthConfig {
 }
 
 pub struct AuthConfig {
-    pub db_url: String,
+    pub pwd_key: String,
+    pub token_duration: u64,
+    pub validation_duration: u64,
+    pub token_key: String,
 }
 
 impl AuthConfig {
     pub fn load_from_env() -> lib_utils::error::Result<AuthConfig> {
-        let db_url = get_env("DATABASE_URL")?;
-        Ok(AuthConfig { db_url })
+        let pwd_key = get_env("AUTH_PWD_KEY")?;
+        let token_duration = get_env("TOKEN_DURATION_SEC")?.parse::<u64>()?;
+        let validation_duration = get_env("VALIDATION_DURATION_SEC")?.parse::<u64>()?;
+        let token_key = get_env("AUTH_TOKEN_KEY")?;
+        Ok(AuthConfig {
+            pwd_key,
+            token_duration,
+            validation_duration,
+            token_key,
+        })
     }
 }
 
@@ -28,7 +39,7 @@ mod tests {
     #[test]
     fn test_auth_config() {
         let config = AuthConfig::load_from_env().unwrap();
-        assert_eq!(config.db_url.len(), 1);
+        assert_eq!(config.pwd_key.len(), 1);
     }
 }
 

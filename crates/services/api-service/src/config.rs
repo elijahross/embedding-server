@@ -10,13 +10,13 @@ pub fn auth_config() -> &'static AuthConfig {
 }
 
 pub struct AuthConfig {
-    pub db_url: String,
+    pub bucket: String,
 }
 
 impl AuthConfig {
     pub fn load_from_env() -> lib_utils::error::Result<AuthConfig> {
-        let db_url = get_env("DATABASE_URL")?;
-        Ok(AuthConfig { db_url })
+        let bucket = get_env("UPLOAD_BUCKET")?;
+        Ok(AuthConfig { bucket })
     }
 }
 

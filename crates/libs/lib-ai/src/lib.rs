@@ -1,4 +1,3 @@
-mod config;
 pub mod error;
 
 use candle_core::{DType, Device, Tensor};

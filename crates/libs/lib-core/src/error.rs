@@ -6,6 +6,8 @@ pub enum Error {
     MissingEnv(&'static str),
     WrongFormat(&'static str),
     FailToDateParse(String),
+
+    Custom(String),
 }
 
 // region:    --- Error Boilerplate

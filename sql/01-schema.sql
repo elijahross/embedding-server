@@ -8,9 +8,18 @@ CREATE TABLE Files (
     "file_id" BIGINT PRIMARY KEY DEFAULT nextval('files_file_id_seq'),
     "filename" TEXT NOT NULL,
     "applicant" TEXT NOT NULL,
+    "file_type" TEXT NOT NULL,
+    "created_at" TIMESTAMP DEFAULT now(),
+    "processed" BOOLEAN DEFAULT FALSE,
+);
+
+CREATE TABLE FileChunks (
+    "chunk_id" BIGSERIAL PRIMARY KEY,
+    "file_id" BIGINT NOT NULL REFERENCES Files(file_id) ON DELETE CASCADE,
+    "chunk_index" INT,
     "content_md" TEXT,
     "embedding" vector(768),
-    "uploaded_at" TIMESTAMP DEFAULT now()
+    "token_count" INT
 );
 
 CREATE TABLE Users (
@@ -28,5 +37,10 @@ CREATE INDEX idx_user_api_key ON Users ("api_key");
 CREATE INDEX idx_user_email ON Users ("email");
 CREATE INDEX idx_file_applicant ON Files ("applicant");
 CREATE INDEX idx_file_filename ON Files ("filename");
-CREATE INDEX idx_file_embedding ON Files USING ivfflat ("embedding");
-CREATE INDEX idx_file_content_md_gin ON Files USING gin (to_tsvector('english', "content_md"));
+CREATE INDEX idx_chunk_content_md_gin 
+    ON FileChunks USING gin (to_tsvector('english', "content_md"));
+CREATE INDEX idx_chunk_embedding 
+    ON FileChunks USING ivfflat ("embedding" vector_cosine_ops)
+    WITH (lists = 100); 
+CREATE INDEX idx_chunk_file_order 
+    ON FileChunks ("file_id", "chunk_index");
