@@ -2,10 +2,12 @@ pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, Clone)]
 pub enum Error {
-    FailToB64uDecode,
     MissingEnv(&'static str),
     WrongFormat(&'static str),
-    FailToDateParse(String),
+    HuggingFaceApiError(String),
+    TokenizerError(String),
+    CandleError(String),
+    Custom(String),
 }
 
 // region:    --- Error Boilerplate
@@ -16,3 +18,41 @@ impl core::fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+impl From<hf_hub::api::sync::ApiError> for Error {
+    fn from(err: hf_hub::api::sync::ApiError) -> Self {
+        Error::HuggingFaceApiError(format!("HF Hub API Error: {}", err))
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(err: serde_json::Error) -> Self {
+        Error::Custom(format!("JSON parsing error: {}", err))
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::Custom(format!("IO error: {}", err))
+    }
+}
+
+impl From<tokenizers::Error> for Error {
+    fn from(err: tokenizers::Error) -> Self {
+        Error::TokenizerError(format!("Tokenizer error: {}", err))
+    }
+}
+
+impl From<candle_core::Error> for Error {
+    fn from(err: candle_core::Error) -> Self {
+        Error::CandleError(format!("Candle core error: {}", err))
+    }
+}
+
+impl From<lib_core::error::Error> for Error {
+    fn from(err: lib_core::error::Error) -> Self {
+        match err {
+            _ => Error::Custom(err.to_string()),
+        }
+    }
+}

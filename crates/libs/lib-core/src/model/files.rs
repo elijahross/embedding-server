@@ -1,19 +1,19 @@
+use crate::database::ModelManager;
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use sqlx::types::chrono::NaiveDateTime;
 use sqlx::FromRow;
-use crate::database::ModelManager;
+use sqlx::types::chrono::NaiveDateTime;
 
 // region: Structs
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct File {
-    pub file_id: String,
+    pub file_id: i64,
     pub applicant: String,
     pub filename: String,
     pub file_type: String,
     pub created_at: NaiveDateTime,
-    pub proccessed: bool,
+    pub processed: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -26,7 +26,7 @@ pub struct FileForCreate {
 #[derive(Debug, Deserialize, Clone)]
 pub struct FileForUpdate {
     pub filename: Option<String>,
-    pub proccessed: Option<bool>,
+    pub processed: Option<bool>,
 }
 
 // endregion: Structs
@@ -53,7 +53,7 @@ impl FileMac {
         Ok(file)
     }
 
-    pub async fn get_file_by_id(mm: &ModelManager, file_id: &str) -> Result<File> {
+    pub async fn get_file_by_id(mm: &ModelManager, file_id: &i64) -> Result<File> {
         let db = mm.db();
         let query = sqlx::query_as::<_, File>(
             r#"
@@ -66,11 +66,11 @@ impl FileMac {
         Ok(file)
     }
 
-    pub fn get_unprocessed_files(mm: &ModelManager) -> Result<Vec<File>> {
+    pub async fn get_unprocessed_files(mm: &ModelManager) -> Result<Vec<File>> {
         let db = mm.db();
         let files = sqlx::query_as::<_, File>(
             r#"
-            SELECT * FROM files WHERE proccessed = FALSE
+            SELECT * FROM files WHERE processed = FALSE
             "#,
         )
         .fetch_all(db)
@@ -79,27 +79,31 @@ impl FileMac {
         Ok(files)
     }
 
-    pub async fn update_file(mm: &ModelManager, file_id: &str, update: FileForUpdate) -> Result<File> {
+    pub async fn update_file(
+        mm: &ModelManager,
+        file_id: &i64,
+        update: FileForUpdate,
+    ) -> Result<File> {
         let db = mm.db();
         let query = sqlx::query_as::<_, File>(
             r#"
             UPDATE files
             SET
                 filename = COALESCE($2, filename),
-                proccessed = COALESCE($3, proccessed)
+                processed = COALESCE($3, processed)
             WHERE file_id = $1
             RETURNING *
             "#,
         )
         .bind(file_id)
         .bind(update.filename)
-        .bind(update.proccessed);
+        .bind(update.processed);
 
         let file = query.fetch_one(db).await?;
         Ok(file)
     }
 
-    pub async fn delete_file(mm: &ModelManager, file_id: &str) -> Result<u64> {
+    pub async fn delete_file(mm: &ModelManager, file_id: &i64) -> Result<u64> {
         let res = sqlx::query(
             r#"
             DELETE FROM files WHERE file_id = $1
@@ -156,20 +160,21 @@ mod tests {
         let new_file = FileForCreate {
             applicant: "applicant_123".to_string(),
             filename: "example.pdf".to_string(),
+            file_type: "pdf".to_string(),
         };
 
         let created_file = FileMac::create_file(&mm, new_file.clone()).await?;
         assert_eq!(created_file.applicant, new_file.applicant);
         assert_eq!(created_file.filename, new_file.filename);
 
-        // Update filename and proccessed
+        // Update filename and processed
         let update = FileForUpdate {
             filename: Some("updated_example.pdf".to_string()),
-            proccessed: Some(true),
+            processed: Some(true),
         };
         let updated_file = FileMac::update_file(&mm, &created_file.file_id, update).await?;
         assert_eq!(updated_file.filename, "updated_example.pdf");
-        assert!(updated_file.proccessed);
+        assert!(updated_file.processed);
 
         // Delete
         let deleted = FileMac::delete_file(&mm, &created_file.file_id).await?;

@@ -1,13 +1,13 @@
 //! This module provides middleware functions and utility functions for
 //! authentication and authorization in an Axum application.
 
-use crate::config::config;
+use crate::config::auth_config;
 use crate::error::{Error, Result};
 use axum::extract::{FromRequestParts, State};
-use axum::http::{request::Parts, Request};
+use axum::http::{Request, request::Parts};
 use axum::{body::Body, middleware::Next, response::Response};
-use lib_auth::bearer::{hash_key, ContentToHash};
-use lib_core::model::users::Role;
+use lib_auth::bearer::{ContentToHash, hash_key};
+use lib_core::model::user::Role;
 use lib_core::{ctx::Ctx, database::ModelManager};
 use serde::{Deserialize, Serialize};
 use tower_governor::{errors::GovernorError, key_extractor::KeyExtractor};
@@ -69,19 +69,19 @@ pub async fn ctx_resolver(
     mut req: Request<Body>,
     next: Next,
 ) -> Result<Response> {
-    // ✅ Extract API Key from Header
+    // Extract API Key from Header
     let key = UserToken
         .extract(&req)
         .map_err(|_| Error::UnableToExtractKey)?;
     let user_id = user_extractor(&req).map_err(|_| Error::UnableToExtractKey);
     if let Ok(user_id) = user_id {
-        let salt = config().hash_salt;
+        let salt = auth_config().hash_salt;
         let content = ContentToHash {
             content: key.to_string(),
             salt,
         };
         let hashed_key = hash_key(content)?;
-        let stored_key = config().api_key.to_string();
+        let stored_key = auth_config().api_key.to_string();
         if hashed_key != stored_key {
             return Err(Error::AuthenticationFails("Invalid API Key".to_string()));
         }
@@ -89,7 +89,7 @@ pub async fn ctx_resolver(
         // Store signature in context
         req.extensions_mut().insert(Ok::<Ctm, Error>(Ctm(Ctx::new(
             user_id.to_string(),
-            Role::Admin,
+            Some(Role::Admin),
         )?)));
     } else {
         return Err(Error::AuthenticationFails("Invalid API Key".to_string()));

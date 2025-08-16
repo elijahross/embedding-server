@@ -4,9 +4,8 @@ use crate::model::user::Role;
 #[derive(Clone, Debug)]
 pub struct Ctx {
     user_id: String,
-
-    /// Note: For the future ACS (Access Control System via API_KEY)
-    conv_id: Option<Role>,
+    /// Note: For the future ACS (Access Control System via API_KEY or Token)
+    role: Option<Role>,
 }
 
 // Constructors.
@@ -14,25 +13,22 @@ impl Ctx {
     pub fn root_ctx() -> Self {
         Ctx {
             user_id: "roots".to_string(),
-            conv_id: None,
+            role: None,
         }
     }
 
-    pub fn new(user_id: String, conv_id: Role) -> Result<Self> {
+    pub fn new(user_id: String, role: Option<Role>) -> Result<Self> {
         if user_id == "roots" {
             Err(Error::CtxCannotNewRootCtx)
         } else {
-            Ok(Self {
-                user_id,
-                conv_id: Some(conv_id),
-            })
+            Ok(Self { user_id, role })
         }
     }
 
     /// Note: For the future ACS (Access Control System)
-    pub fn add_conv_id(&self, conv_id: Role) -> Ctx {
+    pub fn add_role(&self, role: Role) -> Ctx {
         let mut ctx = self.clone();
-        ctx.conv_id = Some(conv_id);
+        ctx.role = Some(role);
         ctx
     }
 }
@@ -43,8 +39,8 @@ impl Ctx {
         self.user_id.clone()
     }
 
-    //. /// Note: For the future UserRoles (Access Control System)
-    pub fn conv_id(&self) -> Option<Role> {
-        self.conv_id.clone()
+    /// Note: For the future UserRoles (Access Control System)
+    pub fn role(&self) -> Option<Role> {
+        self.role.clone()
     }
 }

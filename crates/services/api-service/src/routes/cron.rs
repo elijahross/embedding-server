@@ -1,14 +1,14 @@
 use crate::error::{Error, Result};
-use lib_cron::ChronJobs;
 use axum::{
+    Router,
     extract::Extension,
     response::{IntoResponse, Json, Response},
     routing::post,
-    Router,
 };
+use lib_cron::{ChronJobs, JobsCache};
 use serde_json::json;
 
-pub fn serve_api() -> Router {
+pub fn serve_cron() -> Router {
     Router::new()
         .route("/add", post(add_chron_job))
         .route("/delete", post(delete_chron_job))
@@ -24,11 +24,11 @@ async fn add_chron_job(
         let cron = data
             .get("cron")
             .and_then(|c| c.as_str())
-            .ok_or(Error::ChronFails("Missing data".to_string()))?;
+            .ok_or(Error::Custom("Missing data".to_string()))?;
         let description = data
             .get("description")
             .and_then(|c| c.as_str())
-            .ok_or(Error::ChronFails("Missing data".to_string()))?;
+            .ok_or(Error::Custom("Missing data".to_string()))?;
         let _ = cron_jobs
             .add_job(description.to_string(), cron.to_string())
             .await;
@@ -54,9 +54,9 @@ async fn delete_chron_job(
         let id = data
             .get("id")
             .and_then(|c| c.as_str())
-            .ok_or(Error::ChronFails("Missing data".to_string()))?;
+            .ok_or(Error::Custom("Missing data".to_string()))?;
         let uuid =
-            uuid::Uuid::parse_str(id).map_err(|_| Error::ChronFails("Invalid UUID".to_string()))?;
+            uuid::Uuid::parse_str(id).map_err(|_| Error::Custom("Invalid UUID".to_string()))?;
         let _ = cron_jobs.remove_job(uuid).await;
         res = json!({
             "status": 200,

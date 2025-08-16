@@ -6,6 +6,8 @@ edition = "2024"
 [dependencies]
 lib-storage = { path = "../lib-storage"}
 lib-ai = { path = "../lib-ai"}
+lib-utils = {path = "../lib-utils"}
+lib-core = {path = "../lib-core"}
 
 uuid = {version = "1.16.0", features = ["v4"]}
 chrono = "0.4.40"
@@ -17,6 +19,11 @@ tokio = {version="1.44.2", features=["macros", "rt-multi-thread", "fs"]}
 async-trait = "0.1.88"
 futures-util = "0.3.31"
 reqwest = "0.12.23"
-
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+aws-sdk-s3 = "1.83.0"
+candle-core = "0.9.1"
+fastrand = "2.3.0"
+regex = "1.11.1"
 [lints]
 workspace = true

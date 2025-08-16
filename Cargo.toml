@@ -2,6 +2,6 @@
 
 [workspace]
 resolver = "2"
-members = ["crates/libs/lib-ai", "crates/libs/lib-auth", "crates/libs/lib-cron", "crates/libs/lib-core",  "crates/libs/lib-storage",  "crates/libs/lib-utils", "crates/services/api-service", "crates/libs/lib-storage"]
+members = ["crates/libs/lib-ai", "crates/libs/lib-auth", "crates/libs/lib-cron", "crates/libs/lib-core", "crates/libs/lib-utils", "crates/services/api-service", "crates/libs/lib-storage"]
 
 [workspace.dependencies]

@@ -9,7 +9,7 @@ lib-ai = { path = "../../libs/lib-ai"}
 lib-utils = { path = "../../libs/lib-utils"}
 lib-auth = { path = "../../libs/lib-auth"}
 lib-core = { path = "../../libs/lib-core"}
-lib-email = { path = "../../libs/lib-email"}
+lib-cron = { path = "../../libs/lib-cron"}
 lib-storage = { path = "../../libs/lib-storage"}
 
 # -- AI Inference
@@ -31,6 +31,7 @@ tower_governor = {version = "0.7.0", features=["axum", "tracing"]}
 utoipa = "5.3.1"
 
 moka = {version="0.12.10", features= ["future"]}
+aws-sdk-s3 = "1.83.0"
 
 # -- DB
 sqlx = { version = "0.8.5", features = [ "runtime-tokio", "tls-rustls", "postgres", "chrono", "macros", "uuid", "json"] }

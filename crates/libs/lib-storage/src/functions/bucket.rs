@@ -1,6 +1,6 @@
 use crate::error::{Error, Result};
-use aws_sdk_s3::types::{BucketLocationConstraint, CreateBucketConfiguration};
 use aws_sdk_s3::Client;
+use aws_sdk_s3::types::{BucketLocationConstraint, CreateBucketConfiguration};
 
 pub async fn create_s3_bucket(client: &Client, bucket: &str) -> Result<()> {
     let region = client

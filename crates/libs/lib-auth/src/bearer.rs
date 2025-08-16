@@ -1,3 +1,5 @@
+// Bearer is used for API authentication
+
 use crate::config;
 use crate::error::{Error, Result};
 use hmac::{Hmac, Mac};
@@ -12,12 +14,13 @@ pub struct ContentToHash {
 
 pub fn hash_key(content: ContentToHash) -> Result<String> {
     let key = &config::auth_config().pwd_key;
-    let mut mac = Hmac::<Sha256>::new_from_slice(key).map_err(|_| Error::HmacFailNewFromSlice)?;
+    let mut mac =
+        Hmac::<Sha256>::new_from_slice(key.as_bytes()).map_err(|_| Error::HmacFailNewFromSlice)?;
     mac.update(content.content.as_bytes());
     mac.update(content.salt.as_bytes());
     let result = mac.finalize().into_bytes();
     let res = b64u_encode(result);
-    Ok(format!("#01#{}", res))
+    Ok(format!("#01#{}", res)) //prefix is helpful for versioning
 }
 
 pub fn validate_key(content: ContentToHash, pwd_check: String) -> Result<()> {

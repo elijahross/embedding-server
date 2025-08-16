@@ -1,3 +1,5 @@
+// Token is used for WEB UI Interface and is stored in cookies
+
 use crate::config::auth_config;
 use crate::error::{Error, Result};
 use hmac::{Hmac, Mac};
@@ -46,39 +48,43 @@ impl Display for Token {
 
 pub fn generate_web_token(user_id: &str, salt: &Uuid) -> Result<Token> {
     let config = auth_config();
-    _generate_token(user_id, config.token_duration, salt, &config.token_key)
+    let key = config.token_key.as_bytes();
+    _generate_token(user_id, config.token_duration, salt, &key)
 }
 
 pub fn generate_validation_token(user_id: &str, salt: &str) -> Result<Token> {
     let config = auth_config();
-    _generate_validation_token(user_id, config.validation_duration, salt, &config.token_key)
+    let key = config.token_key.as_bytes();
+    _generate_validation_token(user_id, config.validation_duration, salt, &key)
 }
 
 pub fn validate_web_token(token: &Token, salt: &Uuid) -> Result<()> {
     let config = auth_config();
-    _validate_token(token, salt, &config.token_key)
+    let key = config.token_key.as_bytes();
+    _validate_token(token, salt, &key)
 }
 
 pub fn validate_validation_token(token: &Token, salt: &str) -> Result<()> {
     let config = auth_config();
-    _validate_validation_token(token, salt, &config.token_key)
+    let key = config.token_key.as_bytes();
+    _validate_validation_token(token, salt, &key)
 }
 
-fn _generate_token(ident: &str, duration: i64, salt: &Uuid, key: &[u8]) -> Result<Token> {
+fn _generate_token(ident: &str, duration: u64, salt: &Uuid, key: &[u8]) -> Result<Token> {
     let ident = ident.to_string();
-    let exp = now_utc_plus_sec(duration);
+    let exp = now_utc_plus_sec(duration.try_into().unwrap());
     let sign = _sign_token(&ident, &exp, salt, key)?;
     Ok(Token { ident, exp, sign })
 }
 
 fn _generate_validation_token(
     user_id: &str,
-    duration: i64,
+    duration: u64,
     salt: &str,
     key: &[u8],
 ) -> Result<Token> {
     let ident = user_id.to_string();
-    let exp = now_utc_plus_sec(duration);
+    let exp = now_utc_plus_sec(duration.try_into().unwrap());
     let sign = _sign_validation_token(&ident, &exp, salt, key)?;
     Ok(Token { ident, exp, sign })
 }

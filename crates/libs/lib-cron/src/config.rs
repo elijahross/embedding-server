@@ -12,13 +12,19 @@ pub fn auth_config() -> &'static AuthConfig {
 pub struct AuthConfig {
     pub parser: String,
     pub bucket: String,
+    pub max_tokens: i16,
 }
 
 impl AuthConfig {
     pub fn load_from_env() -> lib_utils::error::Result<AuthConfig> {
         let parser = get_env("PARSER_URL")?;
         let bucket = get_env("UPLOAD_BUCKET")?;
-        Ok(AuthConfig { parser, bucket })
+        let max_tokens = get_env("MAX_TOKENS")?;
+        Ok(AuthConfig {
+            parser,
+            bucket,
+            max_tokens,
+        })
     }
 }
 

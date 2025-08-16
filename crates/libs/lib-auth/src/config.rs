@@ -19,8 +19,8 @@ pub struct AuthConfig {
 impl AuthConfig {
     pub fn load_from_env() -> lib_utils::error::Result<AuthConfig> {
         let pwd_key = get_env("AUTH_PWD_KEY")?;
-        let token_duration = get_env("TOKEN_DURATION_SEC")?.parse::<u64>()?;
-        let validation_duration = get_env("VALIDATION_DURATION_SEC")?.parse::<u64>()?;
+        let token_duration = get_env::<u64>("TOKEN_DURATION_SEC")?;
+        let validation_duration = get_env::<u64>("VALIDATION_DURATION_SEC")?;
         let token_key = get_env("AUTH_TOKEN_KEY")?;
         Ok(AuthConfig {
             pwd_key,

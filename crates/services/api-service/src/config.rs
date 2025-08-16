@@ -11,12 +11,20 @@ pub fn auth_config() -> &'static AuthConfig {
 
 pub struct AuthConfig {
     pub bucket: String,
+    pub hash_salt: uuid::Uuid,
+    pub api_key: String,
 }
 
 impl AuthConfig {
     pub fn load_from_env() -> lib_utils::error::Result<AuthConfig> {
         let bucket = get_env("UPLOAD_BUCKET")?;
-        Ok(AuthConfig { bucket })
+        let hash_salt = get_env("HASH_SALT")?;
+        let api_key = get_env("API_KEY")?;
+        Ok(AuthConfig {
+            bucket,
+            hash_salt,
+            api_key,
+        })
     }
 }
 
@@ -28,7 +36,7 @@ mod tests {
     #[test]
     fn test_auth_config() {
         let config = AuthConfig::load_from_env().unwrap();
-        assert_eq!(config.db_url.len(), 1);
+        assert_eq!(config.bucket.len(), 1);
     }
 }
 

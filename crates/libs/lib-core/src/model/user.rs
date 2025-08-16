@@ -85,7 +85,7 @@ impl UserBmc {
         .bind(user.first_name)
         .bind(user.last_name)
         .bind(user.email)
-        .bind(Role::Trial);
+        .bind(Role::Viewer);
 
         let user = query.fetch_one(db).await?;
         Ok(user)

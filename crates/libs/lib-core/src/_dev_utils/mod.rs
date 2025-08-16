@@ -4,7 +4,7 @@ use crate::error::{Error, Result};
 use tracing::{debug, info};
 
 const DB_CREATE: &str = "postgres://mlapp:mlapp_password@localhost/immotech";
-const DB_URL: &str = "postgres://mlapp:mlapp_password@localhost/immotech";
+const DB_URL: &str = "postgres://s3index:s3index_password@localhost/s3bucketfiles";
 
 pub async fn init_dev() -> Result<DBPool> {
     info!("Initializing Database _DEV");

@@ -1,11 +1,10 @@
 use crate::error::Error;
 use crate::log::log_request;
+use crate::middleware::mw_auth::Ctm;
+use axum::http::{Method, Uri};
 use axum::response::Response;
-use uuid::Uuid;
-use crate::mw::mw_auth::Ctm;
 use tracing::info;
-use axum::http::{Uri, Method};
-
+use uuid::Uuid;
 
 /// This middleware function is used to map the response after a request
 /// has been processed. It performs the following tasks:
@@ -25,15 +24,13 @@ pub async fn mw_response_map(res: Response) -> Response {
     let web_error = res.extensions().get::<Error>().cloned();
     let ctx = res.extensions().get::<Ctm>().map(|c| c.0.clone());
     let uri = res.extensions().get::<Uri>().cloned().unwrap_or_default();
-    let http_method = res.extensions().get::<Method>().cloned().unwrap_or(Method::GET);
+    let http_method = res
+        .extensions()
+        .get::<Method>()
+        .cloned()
+        .unwrap_or(Method::GET);
 
-    let _ = log_request(
-        uuid,
-        http_method,
-        uri,
-        ctx,
-        web_error,
-    ).await;
+    let _ = log_request(uuid, http_method, uri, ctx, web_error).await;
 
     res
 }

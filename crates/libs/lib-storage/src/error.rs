@@ -20,6 +20,8 @@ pub enum Error {
     ErrorCreatingUploadUrl,
     ErrorSigningUrl,
     ProcessFail(String),
+
+    Custom(String),
 }
 
 // region:    --- Error Boilerplate
@@ -30,3 +32,11 @@ impl core::fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
+
+impl From<lib_utils::error::Error> for Error {
+    fn from(err: lib_utils::error::Error) -> Self {
+        match err {
+            _ => Error::Custom(err.to_string()),
+        }
+    }
+}
