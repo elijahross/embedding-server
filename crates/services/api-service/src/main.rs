@@ -294,7 +294,6 @@ async fn main() -> Result<()> {
 
     // API Routes tied with rate limiting and authentication middleware
     let routes_api = Router::new()
-        .merge(routes::cron::serve_cron())
         .merge(routes::embed::serve_embed())
         .route_layer(from_fn(request_auth))
         .layer(GovernorLayer {

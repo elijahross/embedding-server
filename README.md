@@ -127,21 +127,27 @@ flowchart TD
     Inference -->|Embeddings| Response[Send Response to Client]
 ```
 ⸻
+## 📤 Example Response
 
-📈 Example Response
+A successful embedding request returns JSON with embeddings and metadata:
 
+```json
 {
-  "body": [
-    [0.0134, -0.0523, 0.0871, ...]
-  ]
+  "data": [
+    {
+      "embedding": [0.0123, -0.0456, 0.0789, ...],
+      "index": 0
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 42,
+    "total_tokens": 42
+  },
+  "timings": {
+    "tokenization": "120µs",
+    "queue": "2ms",
+    "inference": "35ms"
+  }
 }
-
-Error (queue full):
-
-{
-  "error": "Queue is full",
-  "error_type": "overloaded"
-}
-
-
+```
 ⸻
