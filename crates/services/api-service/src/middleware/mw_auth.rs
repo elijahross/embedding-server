@@ -65,39 +65,52 @@ pub async fn request_auth(ctx: Result<Ctm>, req: Request<Body>, next: Next) -> R
 }
 
 pub async fn ctx_resolver(
-    State(_mm): State<ModelManager>,
+    State(api_key): State<Option<String>>,
     mut req: Request<Body>,
     next: Next,
 ) -> Result<Response> {
-    // Extract API Key from Header
-    let key = UserToken
-        .extract(&req)
-        .map_err(|_| Error::UnableToExtractKey)?;
-    let user_id = user_extractor(&req).map_err(|_| Error::UnableToExtractKey);
-    if let Ok(user_id) = user_id {
-        let salt = auth_config().hash_salt;
-        let content = ContentToHash {
-            content: key.to_string(),
-            salt,
-        };
-        let hashed_key = hash_key(content)?;
-        let stored_key = auth_config().api_key.to_string();
-        if hashed_key != stored_key {
+    if let Some(stored_key) = api_key {
+        // Extract API Key from Header
+        let provided_key = UserToken
+            .extract(&req)
+            .map_err(|_| Error::UnableToExtractKey)?;
+
+        /* // Use userId, if additional permission levels are required
+        let user_id = user_extractor(&req).map_err(|_| Error::UnableToExtractKey);
+        if let Ok(user_id) = user_id {
+            let salt = auth_config().hash_salt;
+            let content = ContentToHash {
+                content: key.to_string(),
+                salt,
+            };
+            let hashed_key = hash_key(content)?;
+            let stored_key = auth_config().api_key.to_string();
+            if hashed_key != stored_key {
+                //return Err(Error::AuthenticationFails("Invalid API Key".to_string()));
+            }
+
+            // Store signature in context
+            req.extensions_mut().insert(Ok::<Ctm, Error>(Ctm(Ctx::new(
+                user_id.to_string(),
+                Some(Role::Admin),
+            )?)));
+        } else {
             //return Err(Error::AuthenticationFails("Invalid API Key".to_string()));
         }
-
-        // Store signature in context
+        */
+        if provided_key != stored_key {
+            return Err(Error::AuthenticationFails("Invalid API Key".to_string()));
+        }
         req.extensions_mut().insert(Ok::<Ctm, Error>(Ctm(Ctx::new(
-            user_id.to_string(),
+            "root".to_string(),
             Some(Role::Admin),
         )?)));
     } else {
-        //return Err(Error::AuthenticationFails("Invalid API Key".to_string()));
+        req.extensions_mut().insert(Ok::<Ctm, Error>(Ctm(Ctx::new(
+            "root".to_string(),
+            Some(Role::Admin),
+        )?)));
     }
-    req.extensions_mut().insert(Ok::<Ctm, Error>(Ctm(Ctx::new(
-        "root".to_string(),
-        Some(Role::Admin),
-    )?)));
     Ok(next.run(req).await)
 }
 

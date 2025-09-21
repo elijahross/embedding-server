@@ -5,8 +5,8 @@ use crate::ai::infer::{
 use crate::ai::tokenization::{SimpleToken as CoreSimpleToken, into_tokens};
 use crate::cache::AppState;
 use crate::error::{Error, Result};
-use crate::http_types::ErrorType;
-use crate::http_types::{
+use crate::types::ErrorType;
+use crate::types::{
     DecodeRequest, DecodeResponse, EmbedAllRequest, EmbedAllResponse, EmbedRequest, EmbedResponse,
     EmbedSparseRequest, EmbedSparseResponse, Embedding, EncodingFormat, ErrorResponse, Input,
     InputIds, InputType, OpenAICompatEmbedding, OpenAICompatErrorResponse, OpenAICompatRequest,

@@ -2,10 +2,10 @@ pub mod ai;
 mod cache;
 pub mod config;
 pub mod error;
-pub mod http_types;
 mod log;
 mod middleware;
 mod routes;
+pub mod types;
 
 pub use self::error::{Error, Result};
 use crate::cache::AppState;
@@ -16,13 +16,13 @@ use axum::{Router, extract::Extension, serve};
 use clap::Parser;
 use lib_core::database::ModelManager;
 use lib_embedding::DType;
+use std::net::Ipv4Addr;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::time::Duration;
 use tower_cookies::CookieManagerLayer;
 use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder};
-
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
@@ -236,7 +236,7 @@ async fn main() -> Result<()> {
     });
 
     let token = args.hf_token.or(args.hf_api_token);
-
+    let api_key = args.api_key.clone();
     info!("Starting AI Inference");
     let (infer, info) = ai::run(
         args.model_id,
@@ -261,13 +261,19 @@ async fn main() -> Result<()> {
     .await?;
 
     info!("Initializing Environment");
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
+    let ip_addr: Ipv4Addr = args
+        .hostname
+        .parse()
+        .expect("Invalid IP address in hostname");
+    let addr = SocketAddr::from((ip_addr, args.port));
     let listener = TcpListener::bind(&addr).await.unwrap();
 
+    // Initialize the model manager for database access
     let mm = ModelManager::new().await?;
+    // Create application context
     let app_state = AppState::new(Arc::new(mm.clone()), Arc::new(info), Arc::new(infer)).await?;
 
-    // Rate limiting Configuration
+    // Rate limiting Configuration, limits are tied to the provided API key (can be switched to IP address or userId)
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()
             .per_second(80) // Increase the rate limit to 40 requests per second
@@ -286,6 +292,7 @@ async fn main() -> Result<()> {
         }
     });
 
+    // API Routes tied with rate limiting and authentication middleware
     let routes_api = Router::new()
         .merge(routes::cron::serve_cron())
         .merge(routes::embed::serve_embed())
@@ -294,9 +301,10 @@ async fn main() -> Result<()> {
             config: governor_conf,
         });
 
+    // Global routes with CORS, cookies, file serving routes should be implemented here
     let global_routes = Router::new()
         .nest("/api/v1", routes_api)
-        .layer(axum::middleware::from_fn_with_state(mm, ctx_resolver))
+        .layer(axum::middleware::from_fn_with_state(api_key, ctx_resolver))
         .layer(axum::middleware::map_response(mw_response_map))
         .layer(CookieManagerLayer::new())
         .layer(Extension(app_state.clone()));
