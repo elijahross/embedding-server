@@ -29,7 +29,7 @@ pub async fn log_request(
     let http_method = http_method.to_string();
     let http_path = uri.path().to_string();
 
-    let error = web_error.as_ref().map(|e| format!("{:?}", e));
+    let error = web_error.as_ref().map(|e| format!("{e:?}"));
 
     let log_line = RequestLogLine {
         uuid,
@@ -43,6 +43,6 @@ pub async fn log_request(
     //Implement: send LogLine to cloudwatch..
 
     let log_lines = serde_json::to_string(&log_line)?;
-    println!("{}", log_lines);
+    println!("{log_lines}");
     Ok(())
 }

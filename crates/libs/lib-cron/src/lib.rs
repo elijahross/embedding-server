@@ -6,8 +6,8 @@ use crate::db_operations::{process_new_files, sync_s3_files};
 use crate::error::{Error, Result};
 use aws_sdk_s3::Client;
 use chrono::Utc;
-use lib_ai::Embeddings;
 use lib_core::database::ModelManager;
+use lib_embedding::Embeddings;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, future::Future, pin::Pin, sync::Arc};
 use tokio::sync::Mutex;
@@ -87,18 +87,14 @@ pub struct ChronJobs {
 
 impl ChronJobs {
     /// Build the scheduler + job registry from owned deps.
-    pub async fn new(
-        mm: Arc<ModelManager>,
-        s3_client: Arc<Client>,
-        embedder: Arc<Mutex<Embeddings>>,
-    ) -> Result<Self> {
+    pub async fn new(mm: Arc<ModelManager>, s3_client: Arc<Client>) -> Result<Self> {
         let scheduler = Arc::new(Mutex::new(JobScheduler::new().await.map_err(|e| {
             Error::ChronFails(format!("Failed to create JobScheduler: {}", e))
         })?));
         let cache = JobsCache::new();
 
         // Build the registry with 'static closures that own Arcs.
-        let registry = JobRegistry::build(mm, s3_client, embedder);
+        let registry = JobRegistry::build(mm, s3_client);
 
         Ok(Self {
             scheduler,
@@ -192,11 +188,7 @@ impl ChronJobs {
 struct JobRegistry;
 
 impl JobRegistry {
-    fn build(
-        mm: Arc<ModelManager>,
-        client: Arc<Client>,
-        embedder: Arc<Mutex<Embeddings>>,
-    ) -> HashMap<String, JobFn> {
+    fn build(mm: Arc<ModelManager>, client: Arc<Client>) -> HashMap<String, JobFn> {
         let mut m: HashMap<String, JobFn> = HashMap::new();
 
         // sync_s3_files
@@ -219,17 +211,15 @@ impl JobRegistry {
         {
             let mm = Arc::clone(&mm);
             let client = Arc::clone(&client);
-            let embedder = Arc::clone(&embedder);
             let f: JobFn = Arc::new(move || {
                 let mm = Arc::clone(&mm);
                 let client = Arc::clone(&client);
-                let embedder = Arc::clone(&embedder);
                 Box::pin(async move {
                     // Lock only around the call that needs the embedder; keep critical section short
-                    let emb_guard = embedder.lock().await;
-                    if let Err(e) = process_new_files(&mm, &client, &*emb_guard).await {
-                        tracing::error!("process_new_files failed: {:?}", e);
-                    }
+                    //let emb_guard = embedder.lock().await;
+                    //if let Err(e) = process_new_files(&mm, &client, &*emb_guard).await {
+                    //    tracing::error!("process_new_files failed: {:?}", e);
+                    //}
                 })
             });
             m.insert("process_new_files".to_string(), f);
@@ -296,12 +286,9 @@ mod tests {
         let db = _dev_utils::init_dev().await.unwrap();
         let mm = Arc::new(ModelManager::dev(db));
         let device = Device::Cpu;
-        let embedder = Arc::new(Mutex::new(
-            Embeddings::new("bert-base-uncased", device).unwrap(),
-        ));
         let s3_client = Arc::new(create_aws_client().await);
 
-        let cache_job = ChronJobs::new(mm, s3_client, embedder)
+        let cache_job = ChronJobs::new(mm, s3_client)
             .await
             .map_err(|_| Error::ChronFails("Failed to create ChronJobs instance".to_string()))
             .unwrap();

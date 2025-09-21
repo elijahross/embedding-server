@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 # -- App Libs
-lib-ai = { path = "../../libs/lib-ai"}
+lib-embedding = { path = "../../libs/lib-embedding", features = ["candle"]}
 lib-utils = { path = "../../libs/lib-utils"}
 lib-auth = { path = "../../libs/lib-auth"}
 lib-core = { path = "../../libs/lib-core"}
@@ -13,12 +13,17 @@ lib-cron = { path = "../../libs/lib-cron"}
 lib-storage = { path = "../../libs/lib-storage"}
 
 # -- AI Inference
-candle-transformers = "0.9.1"
-candle-onnx = "0.9.1"
+candle-core = {version="0.9.1", features=[] }
 candle-nn = "0.9.1"
-candle-core = "0.9.1"
+candle-transformers = { version = "0.9.1" }
+candle-flash-attn = { version = "0.9.1", optional = true}
+candle-flash-attn-v1 = { version = "0.0.1", optional = true }
+candle-cublaslt = { version = "0.0.1", optional = true }
+candle-layer-norm = { version = "0.0.1", optional = true }
+candle-rotary = { version = "0.0.1", optional = true }
 hf-hub = "0.4.3"
 tokenizers = "0.21.4"
+num_cpus = "1.17.0"
 
 # -- Runntime and API
 async-trait = "0.1.88"
@@ -29,7 +34,11 @@ tower-cookies = "0.11.0"
 tower-http = { version = "0.6.2", features = ["fs", "trace"] }
 tower_governor = {version = "0.7.0", features=["axum", "tracing"]}
 utoipa = "5.3.1"
+async-channel = "2.5.0"
+mimalloc = "0.1.48"
+futures = "0.3.31"
 
+clap = {version="4.5.48", features=["derive", "env"]}
 moka = {version="0.12.10", features= ["future"]}
 aws-sdk-s3 = "1.83.0"
 
@@ -46,3 +55,13 @@ bytes = "1.6.0"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 log = "0.4.27"
+metrics = "0.24.2"
+
+[features]
+metal = ["candle-core/metal", "candle-nn/metal"]
+cuda = ["candle-core/cuda", "candle-nn/cuda", "dep:candle-cublaslt", "dep:candle-layer-norm", "dep:candle-rotary"]
+flash-attn-v1 = ["dep:candle-flash-attn-v1", "cuda"]
+flash-attn = ["dep:candle-flash-attn", "cuda"]
+
+candle = []
+ort = []

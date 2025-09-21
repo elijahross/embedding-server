@@ -1,0 +1,11 @@
+[package]
+name = "lib-telemetry"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# -- App Libs
+opentelemetry = "^0.19"
+tonic = "^0.9"
+tracing = "^0.1"
+tracing-opentelemetry = "^0.19"

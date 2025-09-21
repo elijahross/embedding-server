@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 lib-storage = { path = "../lib-storage"}
-lib-ai = { path = "../lib-ai"}
+lib-embedding = { path = "../lib-embedding"}
 lib-utils = {path = "../lib-utils"}
 lib-core = {path = "../lib-core"}
 

@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Json, Response},
     routing::post,
 };
-use lib_cron::{ChronJobs, JobsCache};
+use lib_cron::ChronJobs;
 use serde_json::json;
 
 pub fn serve_cron() -> Router {
