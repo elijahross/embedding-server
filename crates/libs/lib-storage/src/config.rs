@@ -1,11 +1,17 @@
 use lib_utils::envs::get_env;
 use std::sync::OnceLock;
+use tracing::error;
 
 pub fn config() -> &'static Config {
     static INSTANCE: OnceLock<Config> = OnceLock::new();
     INSTANCE.get_or_init(|| {
-        Config::load_from_env()
-            .unwrap_or_else(|e| panic!("Failed while loading configuration - Cause: {e:?}"))
+        match Config::load_from_env() {
+            Ok(cfg) => cfg,
+            Err(e) => {
+                error!("Failed while loading configuration - Cause: {e:?}");
+                Config::default() // <- fallback (requires implementing Default)
+            }
+        }
     })
 }
 

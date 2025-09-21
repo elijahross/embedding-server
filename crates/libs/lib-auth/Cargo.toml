@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 # -- App Libs
 lib-utils = { path = "../lib-utils"}
-
+tracing = "0.1.41"
 hmac = "0.12.1"
 sha2 = "0.10.9"
 uuid = "1.18.0"
